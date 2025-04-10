@@ -1,0 +1,198 @@
+:root {
+  /* Warm color palette */
+  --primary-color: #FFD700; /* Gold */
+  --secondary-color: #FF6347; /* Tomato */
+  --accent-color: #FF8C00; /* Dark Orange */
+  --background-color: #FFF8DC; /* Cornsilk */
+  --text-color: #333333;
+  --error-color: #FF0000;
+  --success-color: #4CAF50;
+  --warning-color: #FFC107;
+  --light-gray: #E0E0E0;
+  --dark-gray: #757575;
+
+  /* Border radius for rounded corners */
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 16px;
+
+  /* Shadows for iOS-like depth */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.2);
+
+  /* Transitions for iOS-like animations */
+  --transition-fast: all 0.2s ease-in-out;
+  --transition-medium: all 0.3s ease-in-out;
+  --transition-slow: all 0.5s ease-in-out;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Common button styles */
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: var(--text-color);
+  border: none;
+  border-radius: var(--border-radius-md);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* Card component */
+.card {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 20px;
+  margin-bottom: 20px;
+  transition: var(--transition-medium);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+/* Form elements */
+input, textarea, select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--light-gray);
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 15px;
+  transition: var(--transition-fast);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+}
+
+/* Container classes */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Responsive layout */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* iOS-style switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--light-gray);
+  transition: var(--transition-fast);
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: var(--transition-fast);
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--primary-color);
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Utility classes */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mt-4 { margin-top: 2rem; }
+
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+.mb-4 { margin-bottom: 2rem; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.flex-wrap { flex-wrap: wrap; }

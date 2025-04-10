@@ -1,0 +1,555 @@
+.dashboard-container {
+  max-width: 1200px;
+  margin: 80px auto 20px;
+  padding: 0 20px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  color: var(--text-color);
+  font-size: 2rem;
+}
+
+/* Device Selector */
+.device-selector {
+  display: flex;
+  align-items: center;
+}
+
+.device-selector label {
+  margin-right: 10px;
+  font-weight: 500;
+}
+
+.device-selector select {
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--light-gray);
+  background-color: white;
+  font-size: 14px;
+  min-width: 200px;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-areas:
+    "status controls"
+    "history chart";
+  gap: 20px;
+}
+
+.grid-item {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: 20px;
+  transition: var(--transition-medium);
+}
+
+.grid-item:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.grid-item.status { grid-area: status; }
+.grid-item.controls { grid-area: controls; }
+.grid-item.history { grid-area: history; }
+.grid-item.chart { grid-area: chart; }
+
+/* Device Status Card */
+.device-status-card {
+  height: 100%;
+}
+
+.device-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.device-status-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.device-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.device-status.online {
+  background-color: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.device-status.online:before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #4CAF50;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.device-status.offline {
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
+.device-status.offline:before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: #F44336;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.device-status-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: var(--border-radius-md);
+}
+
+.status-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  background-color: rgba(255, 215, 0, 0.1);
+  border-radius: 50%;
+  margin-right: 15px;
+}
+
+.status-icon i {
+  font-size: 24px;
+  color: var(--primary-color);
+}
+
+.status-info {
+  flex: 1;
+}
+
+.status-info h4 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.status-info p {
+  margin: 0;
+  color: var(--dark-gray);
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 12px;
+  background-color: var(--light-gray);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--primary-color);
+  border-radius: 6px;
+  transition: width 0.3s ease;
+  position: relative;
+}
+
+.progress-fill:after {
+  content: attr(data-level);
+  position: absolute;
+  right: 0;
+  top: -18px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* WiFi Strength */
+.wifi-strength {
+  display: flex;
+  align-items: flex-end;
+  height: 20px;
+  gap: 3px;
+}
+
+.wifi-bar {
+  width: 6px;
+  background-color: var(--light-gray);
+  border-radius: 3px;
+  transition: var(--transition-fast);
+}
+
+.wifi-bar:nth-child(1) {
+  height: 5px;
+}
+
+.wifi-bar:nth-child(2) {
+  height: 10px;
+}
+
+.wifi-bar:nth-child(3) {
+  height: 15px;
+}
+
+.wifi-bar:nth-child(4) {
+  height: 20px;
+}
+
+.wifi-bar.active {
+  background-color: var(--primary-color);
+}
+
+/* Feeding Controls Card */
+.feeding-controls-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tab-navigation {
+  display: flex;
+  border-bottom: 1px solid var(--light-gray);
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tab-button i {
+  font-size: 18px;
+}
+
+.tab-button.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.tab-button:hover:not(.active) {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.tab-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Manual Feeding */
+.manual-feeding {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.amount-selector {
+  margin-bottom: 20px;
+}
+
+.amount-selector h4 {
+  margin: 0 0 15px;
+}
+
+.amount-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.btn-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  padding: 0;
+  background-color: var(--light-gray);
+  color: var(--text-color);
+}
+
+.btn-circle:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.amount-controls input {
+  width: 80px;
+  text-align: center;
+  font-size: 18px;
+  padding: 8px;
+  margin: 0 10px;
+}
+
+.btn-dispense {
+  font-size: 18px;
+  padding: 15px;
+  margin-top: auto;
+}
+
+/* Scheduled Feeding */
+.scheduled-feeding {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.scheduled-feeding h4 {
+  margin: 0 0 15px;
+}
+
+.schedule-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 20px;
+}
+
+.schedule-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: var(--border-radius-md);
+  margin-bottom: 10px;
+}
+
+.schedule-time,
+.schedule-amount {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.schedule-time i,
+.schedule-amount i {
+  color: var(--primary-color);
+}
+
+.no-schedules-message {
+  text-align: center;
+  color: var(--dark-gray);
+  margin: 20px 0;
+}
+
+/* Feeding History Card */
+.feeding-history-card h3 {
+  margin: 0 0 20px;
+}
+
+.feeding-table {
+  margin-bottom: 15px;
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--light-gray);
+}
+
+.feeding-table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  background-color: #f3f3f3;
+  font-weight: bold;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.feeding-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.feeding-table-row:last-child {
+  border-bottom: none;
+}
+
+.table-cell {
+  padding: 10px 15px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px;
+}
+
+.page-info {
+  font-size: 14px;
+  color: var(--dark-gray);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.no-history-message {
+  text-align: center;
+  color: var(--dark-gray);
+  margin: 20px 0;
+}
+
+/* Chart Card */
+.chart-card h3 {
+  margin: 0 0 20px;
+}
+
+.chart-container {
+  height: 300px;
+  position: relative;
+}
+
+/* No Devices Message */
+.no-devices-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  height: 100%;
+}
+
+.no-devices-message i {
+  font-size: 60px;
+  color: var(--light-gray);
+  margin-bottom: 20px;
+}
+
+.no-devices-message h3 {
+  margin: 0 0 10px;
+}
+
+.no-devices-message p {
+  margin: 0 0 20px;
+  color: var(--dark-gray);
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh - 60px);
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 215, 0, 0.2);
+  border-top-color: var(--primary-color);
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error */
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  height: calc(100vh - 60px);
+}
+
+.error-container i {
+  font-size: 60px;
+  color: var(--error-color);
+  margin-bottom: 20px;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "status"
+      "controls"
+      "history"
+      "chart";
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .device-selector {
+    width: 100%;
+  }
+  
+  .device-selector select {
+    flex: 1;
+  }
+  
+  .feeding-table-header,
+  .feeding-table-row {
+    grid-template-columns: 1.5fr 0.75fr 0.75fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .status-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .status-icon {
+    margin-right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .amount-controls {
+    max-width: 100%;
+  }
+}

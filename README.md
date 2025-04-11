@@ -2,7 +2,7 @@
 
 A comprehensive IoT solution for automated pet feeding with real-time monitoring and control.
 
-![Smart Pet Feeder]([<img src="https://github.com/Redwan002117/Smart_Pet_Feeder/blob/main/Smart_Pet_Feeder_Banner.png"/>])
+![Smart Pet Feeder](<img src="https://github.com/Redwan002117/Smart_Pet_Feeder/blob/main/Smart_Pet_Feeder_Banner.png"/>)
 
 ## Overview
 

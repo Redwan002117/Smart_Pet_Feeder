@@ -9,57 +9,163 @@
   width: 100%;
   background-color: white;
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 999;
-  padding: 8px 0;
+  z-index: 100;
+  border-top: 1px solid var(--light-gray);
+}
+
+.dark-mode .mobile-nav {
+  background-color: #1e1e1e;
+  border-top: 1px solid #333;
 }
 
 .mobile-nav-menu {
   display: flex;
   justify-content: space-around;
   align-items: center;
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  padding: 8px 0;
 }
 
 .mobile-nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-decoration: none;
   color: var(--text-color);
-  font-size: 12px;
-  padding: 8px;
-}
-
-.mobile-nav-item.active {
-  color: var(--primary-color);
+  text-decoration: none;
+  padding: 5px 0;
+  font-size: 0.75rem;
 }
 
 .mobile-nav-icon {
-  font-size: 24px;
+  font-size: 1.3rem;
   margin-bottom: 4px;
+}
+
+.mobile-nav-item.active {
+  color: var(--theme-primary);
 }
 
 /* Hamburger Menu for Sidebar */
 .hamburger-menu {
-  display: none;
+  display: flex;
   flex-direction: column;
   justify-content: space-around;
   width: 24px;
-  height: 24px;
+  height: 20px;
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 0;
+  margin-right: 15px;
 }
 
 .hamburger-menu div {
   width: 24px;
   height: 3px;
   background-color: var(--text-color);
-  border-radius: 2px;
+  border-radius: 10px;
   transition: all 0.3s;
+}
+
+.dark-mode .hamburger-menu div {
+  background-color: var(--dark-gray);
+}
+
+/* Animation for hamburger menu when sidebar is open */
+.hamburger-menu.open div:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-menu.open div:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger-menu.open div:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* Sidebar navigation */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 60px;
+  width: 250px;
+  height: calc(100vh - 60px);
+  background-color: white;
+  box-shadow: var(--shadow-md);
+  transform: translateX(-100%);
+  transition: transform var(--transition-medium);
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+/* Handle dark mode for sidebar */
+.dark-mode .sidebar {
+  background-color: #1e1e1e;
+  border-right: 1px solid #333;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+.sidebar-nav a {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: var(--text-color);
+  text-decoration: none;
+  transition: background-color var(--transition-fast);
+}
+
+.sidebar-nav a i {
+  margin-right: 10px;
+  font-size: 1.2rem;
+}
+
+.sidebar-nav a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .sidebar-nav a:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-nav a.active {
+  background-color: rgba(var(--theme-primary-rgb), 0.1);
+  color: var(--theme-primary);
+  font-weight: 600;
+  border-left: 3px solid var(--theme-primary);
+}
+
+.sidebar-section {
+  margin-top: 15px;
+  border-top: 1px solid var(--light-gray);
+  padding-top: 15px;
+}
+
+.sidebar-heading {
+  padding: 5px 20px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--dark-gray);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 99;
 }
 
 /* Tablet Navigation Adjustments */
@@ -80,6 +186,11 @@
   
   .sidebar.open {
     left: 0;
+  }
+  
+  /* For tablets and smaller screens */
+  .main-content.authenticated {
+    padding-left: 0;
   }
 }
 
@@ -119,19 +230,6 @@
 
 .dark-mode .hamburger-menu div {
   background-color: #e0e0e0;
-}
-
-/* Animation for hamburger menu when sidebar is open */
-.hamburger-menu.open div:nth-child(1) {
-  transform: translateY(8px) rotate(45deg);
-}
-
-.hamburger-menu.open div:nth-child(2) {
-  opacity: 0;
-}
-
-.hamburger-menu.open div:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg);
 }
 
 /* Animated sidebar transition */
@@ -181,4 +279,34 @@
   background-color: rgba(255, 152, 0, 0.1);
   border-left-color: #FF9800;
   color: #FF9800;
+}
+
+/* Responsive adjustments */
+@media (min-width: 993px) {
+  .sidebar {
+    transform: translateX(0);
+  }
+  
+  .hamburger-menu {
+    display: none;
+  }
+  
+  .sidebar-overlay {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  /* For mobile screens */
+  .mobile-nav {
+    display: block;
+  }
+  
+  .main-content.authenticated {
+    padding-bottom: 70px; /* Make room for the mobile nav */
+  }
+  
+  .hamburger-menu {
+    display: flex;
+  }
 }

@@ -71,6 +71,19 @@ CREATE TABLE public.user_preferences (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create notification preferences table
+CREATE TABLE public.notification_preferences (
+  user_id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  email_feeding BOOLEAN DEFAULT TRUE,
+  email_device_status BOOLEAN DEFAULT TRUE,
+  push_feeding BOOLEAN DEFAULT TRUE,
+  push_device_status BOOLEAN DEFAULT TRUE,
+  schedule_reminder BOOLEAN DEFAULT TRUE,
+  food_level_warning BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
@@ -78,30 +91,35 @@ ALTER TABLE public.pets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feeding_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notification_preferences ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
--- Profiles: Users can read/update only their own profile
-CREATE POLICY "Users can view their own profile" 
-  ON public.profiles 
-  FOR SELECT USING (auth.uid() = id);
+-- Drop any existing problematic policies
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Known admins can view all profiles" ON public.profiles;
 
+-- Simplified Profiles policies to avoid recursion
+-- Anyone can view profiles (read-only)
+CREATE POLICY "Anyone can view profiles" 
+  ON public.profiles 
+  FOR SELECT USING (true);
+
+-- Users can update their own profile
 CREATE POLICY "Users can update their own profile" 
   ON public.profiles 
   FOR UPDATE USING (auth.uid() = id);
 
--- Special policy for admin emails - this avoids the recursion
-CREATE POLICY "Admin email access"
-  ON public.profiles
-  FOR SELECT 
-  USING (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com');
-
--- Enable admin users after initial setup
-CREATE POLICY "Admins can view all profiles" 
+-- Users can insert their own profile
+CREATE POLICY "Users can insert their own profile" 
   ON public.profiles 
-  FOR SELECT USING (
-    (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com') OR
-    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
-  );
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Admin direct access using email check (no recursion)
+CREATE POLICY "Admin direct access"
+  ON public.profiles
+  FOR ALL
+  USING (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com');
 
 -- Devices: Users can CRUD only their own devices
 CREATE POLICY "Users can view their own devices" 
@@ -180,42 +198,43 @@ CREATE POLICY "Users can update their own preferences"
   ON public.user_preferences 
   FOR UPDATE USING (auth.uid() = id);
 
--- Admins can access all data
+CREATE POLICY "Users can insert their own preferences" 
+  ON public.user_preferences 
+  FOR INSERT WITH CHECK (auth.uid() = id);
+
+-- Notification Preferences policies
+CREATE POLICY "Users can view their own notification preferences" 
+  ON public.notification_preferences 
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own notification preferences" 
+  ON public.notification_preferences 
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own notification preferences" 
+  ON public.notification_preferences 
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Admin access policies (using the admin email directly to avoid recursion)
+-- For devices
 CREATE POLICY "Admins can view all devices" 
   ON public.devices 
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR SELECT USING (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com');
 
+-- For pets
 CREATE POLICY "Admins can view all pets" 
   ON public.pets 
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR SELECT USING (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com');
 
+-- For schedules
 CREATE POLICY "Admins can view all schedules" 
   ON public.schedules 
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR SELECT USING (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com');
 
+-- For feeding history
 CREATE POLICY "Admins can view all feeding history" 
   ON public.feeding_history 
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
+  FOR SELECT USING (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com');
 
 -- Create indexes for better performance
 CREATE INDEX idx_devices_user_id ON public.devices(user_id);
@@ -242,6 +261,10 @@ BEGIN
   
   -- Create user preferences
   INSERT INTO public.user_preferences (id)
+  VALUES (NEW.id);
+  
+  -- Create notification preferences
+  INSERT INTO public.notification_preferences (user_id)
   VALUES (NEW.id);
   
   RETURN NEW;

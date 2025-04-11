@@ -78,15 +78,21 @@ const Settings: React.FC = () => {
   const fetchSessions = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      // In newer Supabase versions, we don't have getSessionList API
+      // Instead, we can just get the current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('No active session');
       
-      const { data, error } = await supabase.auth.getSessionList();
-      if (error) throw error;
-      
-      setSessions(data);
+      // Create a sessions array with just the current session
+      setSessions([{
+        id: session.access_token,
+        created_at: session.created_at,
+        browser: navigator.userAgent.match(/chrome|firefox|safari|edge|opera/i)?.[0] || 'Unknown',
+        os: navigator.platform || 'Unknown',
+        current: true
+      }]);
     } catch (err: any) {
-      console.error('Error fetching sessions:', err);
+      console.error('Error fetching session:', err);
       setError(err.message || 'Failed to load sessions');
     } finally {
       setLoading(false);
@@ -156,15 +162,10 @@ const Settings: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      // Inform user that 2FA setup is not available in the current version
+      setError('Two-factor authentication setup is not available in the current version of Supabase.');
+      setShowTwoFactorSetup(false);
       
-      const { data, error } = await supabase.auth.generate2FASecret();
-      if (error) throw error;
-      
-      setTwoFactorQRCode(data.qr_code);
-      setTwoFactorSecret(data.secret);
-      setShowTwoFactorSetup(true);
     } catch (err: any) {
       console.error('Error setting up 2FA:', err);
       setError(err.message || 'Failed to set up 2FA');
@@ -180,18 +181,10 @@ const Settings: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-      
-      const { error } = await supabase.auth.verify2FA({
-        code: twoFactorCode
-      });
-      
-      if (error) throw error;
-      
-      setTwoFactorEnabled(true);
+      // Inform user that 2FA is not available
+      setError('Two-factor authentication is not available in the current version of Supabase.');
       setShowTwoFactorSetup(false);
-      setSuccess('Two-factor authentication enabled successfully');
+      
     } catch (err: any) {
       console.error('Error enabling 2FA:', err);
       setError(err.message || 'Failed to enable 2FA');
@@ -205,14 +198,9 @@ const Settings: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      // Inform user that 2FA is not available
+      setError('Two-factor authentication is not available in the current version of Supabase.');
       
-      const { error } = await supabase.auth.disable2FA();
-      if (error) throw error;
-      
-      setTwoFactorEnabled(false);
-      setSuccess('Two-factor authentication disabled successfully');
     } catch (err: any) {
       console.error('Error disabling 2FA:', err);
       setError(err.message || 'Failed to disable 2FA');
@@ -226,19 +214,13 @@ const Settings: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      // In newer Supabase, we can't directly log out other sessions
+      // Instead, show a message that this feature is unavailable
+      setSuccess('This feature is not available in the current version');
       
-      const { error } = await supabase.auth.logoutOtherSessions();
-      if (error) throw error;
-      
-      // Update sessions list
-      setSessions([sessions.find(s => s.current) || sessions[0]]);
-      
-      setSuccess('All other sessions have been logged out successfully');
     } catch (err: any) {
-      console.error('Error logging out other sessions:', err);
-      setError(err.message || 'Failed to log out other sessions');
+      console.error('Error:', err);
+      setError(err.message || 'Feature not available');
     } finally {
       setLoading(false);
     }

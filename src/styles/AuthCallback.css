@@ -35,6 +35,18 @@
   margin-bottom: 20px;
 }
 
+.auth-callback-loading h2,
+.auth-callback-error h2 {
+  margin: 0 0 10px;
+  font-size: 1.5rem;
+}
+
+.auth-callback-loading p,
+.auth-callback-error p {
+  margin: 0 0 20px;
+  color: var(--dark-gray);
+}
+
 .auth-callback-error h2 {
   margin-bottom: 15px;
   color: var(--error-color);
@@ -43,6 +55,11 @@
 .auth-callback-error p {
   margin-bottom: 25px;
   color: var(--dark-gray);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes spin {

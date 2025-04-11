@@ -47,8 +47,6 @@
   background-color: white;
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-md);
-  overflow: hidden;
-  margin-bottom: 20px;
 }
 
 .user-table {

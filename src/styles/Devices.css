@@ -93,8 +93,8 @@
 }
 
 .device-card:hover {
+  transform: translateY(-5px);
   box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
 }
 
 .device-card-header {
@@ -111,12 +111,10 @@
 }
 
 .status-badge {
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  display: inline-flex;
-  align-items: center;
 }
 
 .status-badge:before {
@@ -138,8 +136,8 @@
 }
 
 .status-badge.offline {
-  background-color: rgba(158, 158, 158, 0.1);
-  color: #9E9E9E;
+  background-color: rgba(244, 67, 54, 0.1);
+  color: #F44336;
 }
 
 .status-badge.offline:before {

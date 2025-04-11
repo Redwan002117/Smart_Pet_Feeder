@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabaseClient.ts';
 import { Pet } from '../types';
 import '../styles/Pets.css';
 

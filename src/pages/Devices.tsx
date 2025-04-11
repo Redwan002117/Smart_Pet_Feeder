@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../subabaseClient';
+import { supabase } from '../supabaseClient.ts';
 import { Device } from '../types';
 import '../styles/Devices.css';
 

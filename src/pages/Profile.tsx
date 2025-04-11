@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../subabaseClient';
+import { supabase } from '../supabaseClient.ts';
 import { UserProfile } from '../types';
 import '../styles/Profile.css';
 

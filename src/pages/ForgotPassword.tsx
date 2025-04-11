@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { isValidEmail } from '../utils/validation';
+import { supabase } from '../supabaseClient.ts';
+import { isValidEmail } from '../utils/validation.ts';
 import '../styles/Auth.css';
 
 const ForgotPassword: React.FC = () => {

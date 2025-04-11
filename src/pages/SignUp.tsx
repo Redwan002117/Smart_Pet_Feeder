@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { isValidEmail, isValidPassword, isValidUsername } from '../utils/validation';
+import { supabase } from '../supabaseClient.ts';
+import { isValidEmail, isValidPassword, isValidUsername } from '../utils/validation.ts';
 import '../styles/Auth.css';
 
 const SignUp: React.FC = () => {

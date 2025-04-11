@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import { isValidSSID, isValidWiFiPassword } from '../utils/validation';
+import { supabase } from '../supabaseClient.ts';
+import { isValidSSID, isValidWiFiPassword } from '../utils/validation.ts';
 import '../styles/DeviceSetup.css';
 
 const DeviceSetup: React.FC = () => {

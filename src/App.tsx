@@ -1,28 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { supabase } from './supabaseClient';
-import Header from './components/Header';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import SignUp from './pages/SignUp';
-import ProtectedRoute from './components/ProtectedRoute';
-import AdminRoute from './components/AdminRoute';
+import { supabase } from './supabaseClient.ts';
+import Header from './components/Header.tsx';
+import Home from './pages/Home.tsx';
+import Login from './pages/Login.tsx';
+import SignUp from './pages/SignUp.tsx';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
+import AdminRoute from './components/AdminRoute.tsx';
 import './styles/global.css';
 
 // Lazy load components for better performance
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const Devices = React.lazy(() => import('./pages/Devices'));
-const DeviceSetup = React.lazy(() => import('./pages/DeviceSetup'));
-const Pets = React.lazy(() => import('./pages/Pets'));
-const Schedule = React.lazy(() => import('./pages/Schedule'));
-const History = React.lazy(() => import('./pages/History'));
-const Profile = React.lazy(() => import('./pages/Profile'));
-const Settings = React.lazy(() => import('./pages/Settings'));
-const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard'));
-const UserManagement = React.lazy(() => import('./pages/UserManagement'));
-const AdminSettings = React.lazy(() => import('./pages/AdminSettings'));
-const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
-const AuthCallback = React.lazy(() => import('./pages/AuthCallback'));
+const Dashboard = React.lazy(() => import('./pages/Dashboard.tsx'));
+const Devices = React.lazy(() => import('./pages/Devices.tsx'));
+const DeviceSetup = React.lazy(() => import('./pages/DeviceSetup.tsx'));
+const Pets = React.lazy(() => import('./pages/Pets.tsx'));
+const Schedule = React.lazy(() => import('./pages/Schedule.tsx'));
+const History = React.lazy(() => import('./pages/History.tsx'));
+const Profile = React.lazy(() => import('./pages/Profile.tsx'));
+const Settings = React.lazy(() => import('./pages/Settings.tsx'));
+const AdminDashboard = React.lazy(() => import('./pages/AdminDashboard.tsx'));
+const UserManagement = React.lazy(() => import('./pages/UserManagement.tsx'));
+const AdminSettings = React.lazy(() => import('./pages/AdminSettings.tsx'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword.tsx'));
+const AuthCallback = React.lazy(() => import('./pages/AuthCallback.tsx'));
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);

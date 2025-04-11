@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../supabaseClient.ts';
 import { Line, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,

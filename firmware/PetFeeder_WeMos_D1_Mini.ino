@@ -11,7 +11,7 @@
 #define MOTOR_DELAY_PER_GRAM 100 // ms per gram of food
 #define SETUP_TOKEN "your-secret-token-1234"
 #define AP_SSID "PetFeederSetup"
-#define AP_PASSWORD "12345678"
+#define AP_PASSWORD "Feed_Smart"
 #define SUPABASE_URL "YOUR_SUPABASE_URL"
 #define SUPABASE_KEY "YOUR_ANON_KEY"
 #define DEVICES_ENDPOINT "/rest/v1/devices"
@@ -24,11 +24,13 @@ const int WIFI_SSID_ADDR = 0;
 const int WIFI_PASS_ADDR = 64;
 const int DEVICE_ID_ADDR = 128;
 const int USER_ID_ADDR = 192;
-const int SETUP_COMPLETE_ADDR = 256;
+const int USER_JWT_ADDR = 256;
+const int SETUP_COMPLETE_ADDR = 480; // Moved to give more space for JWT
 
 // Variables
 String deviceId = "";
 String userId = "";
+String userJWT = "";
 bool setupComplete = false;
 AsyncWebServer server(80);
 
@@ -43,7 +45,6 @@ void writeStringToEEPROM(int startAddr, const String &data);
 void generateDeviceId();
 bool connectToWifi(const String &ssid, const String &password);
 void handleSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len);
-void registerDevice();
 void updateDeviceStatus();
 void checkForCommands();
 void dispenseFood(int amount);
@@ -52,6 +53,7 @@ void updateMotor();
 
 void setup() {
   Serial.begin(115200);
+  randomSeed(analogRead(A0)); // Use analog pin for randomness
   
   // Initialize pins
   pinMode(FOOD_LEVEL_PIN, INPUT);
@@ -69,6 +71,7 @@ void setup() {
     String savedPassword = readStringFromEEPROM(WIFI_PASS_ADDR, 63);
     deviceId = readStringFromEEPROM(DEVICE_ID_ADDR, 63);
     userId = readStringFromEEPROM(USER_ID_ADDR, 63);
+    userJWT = readStringFromEEPROM(USER_JWT_ADDR, 223); // Read JWT
     
     Serial.println("Attempting to connect to saved WiFi...");
     if (connectToWifi(savedSSID, savedPassword)) {
@@ -92,16 +95,26 @@ void setup() {
     Serial.print("AP IP address: ");
     Serial.println(IP);
     
-    // Setup server endpoints (silence unused parameter warnings)
+    // Enable CORS
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "Content-Type, X-Setup-Token");
+    
+    // Handle OPTIONS preflight requests
+    server.onNotFound([](AsyncWebServerRequest *request) {
+      if (request->method() == HTTP_OPTIONS) {
+        request->send(200);
+      } else {
+        request->send(403, "text/plain", "Access Denied");
+      }
+    });
+    
+    // Setup server endpoints
     server.on("/setup", HTTP_POST, [](AsyncWebServerRequest *) {}, NULL, 
       [](AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t, size_t) {
         handleSetup(request, data, len);
       }
     );
-    
-    server.onNotFound([](AsyncWebServerRequest *request) {
-      request->send(403, "text/plain", "Access Denied");
-    });
     
     server.begin();
   }
@@ -110,8 +123,13 @@ void setup() {
 void loop() {
   if (setupComplete) {
     if (WiFi.status() == WL_CONNECTED) {
-      updateDeviceStatus();
-      checkForCommands();
+      // Operation cycle every 5 seconds
+      static unsigned long lastUpdate = 0;
+      if (millis() - lastUpdate >= 5000) {
+        updateDeviceStatus();
+        checkForCommands();
+        lastUpdate = millis();
+      }
     } else {
       Serial.println("WiFi disconnected. Reconnecting...");
       connectToWifi(readStringFromEEPROM(WIFI_SSID_ADDR, 63), readStringFromEEPROM(WIFI_PASS_ADDR, 63));
@@ -140,10 +158,45 @@ void writeStringToEEPROM(int startAddr, const String &data) {
 }
 
 void generateDeviceId() {
-  const char charset[] = "0123456789abcdef";
-  deviceId = "pf-";
-  for (int i = 0; i < 16; i++) {
-    deviceId += charset[random(16)];
+  // Generate a proper UUID v4 format (xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx)
+  // where x is any hexadecimal digit and y is 8, 9, A, or B
+  
+  const char hexChars[] = "0123456789abcdef";
+  deviceId = "";
+  
+  // First group (8 chars)
+  for (int i = 0; i < 8; i++) {
+    deviceId += hexChars[random(16)];
+  }
+  
+  deviceId += "-";
+  
+  // Second group (4 chars)
+  for (int i = 0; i < 4; i++) {
+    deviceId += hexChars[random(16)];
+  }
+  
+  deviceId += "-";
+  
+  // Third group (4 chars, first digit is always 4 for version 4 UUID)
+  deviceId += "4";
+  for (int i = 0; i < 3; i++) {
+    deviceId += hexChars[random(16)];
+  }
+  
+  deviceId += "-";
+  
+  // Fourth group (4 chars, first digit is 8, 9, A, or B)
+  deviceId += hexChars[8 + random(4)]; // 8, 9, a, or b
+  for (int i = 0; i < 3; i++) {
+    deviceId += hexChars[random(16)];
+  }
+  
+  deviceId += "-";
+  
+  // Fifth group (12 chars)
+  for (int i = 0; i < 12; i++) {
+    deviceId += hexChars[random(16)];
   }
 }
 
@@ -179,8 +232,9 @@ void handleSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len) {
   String ssid = doc["ssid"] | "";
   String password = doc["password"] | "";
   String userIdFromRequest = doc["user_id"] | "";
+  String jwtFromRequest = doc["access_token"] | "";
   
-  if (ssid.isEmpty() || password.isEmpty() || userIdFromRequest.isEmpty()) {
+  if (ssid.isEmpty() || password.isEmpty() || userIdFromRequest.isEmpty() || jwtFromRequest.isEmpty()) {
     request->send(400, "text/plain", "Missing parameters");
     return;
   }
@@ -190,6 +244,7 @@ void handleSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len) {
     return;
   }
   
+  // Generate device ID if not provided
   if (deviceId.isEmpty()) {
     generateDeviceId();
   }
@@ -198,13 +253,13 @@ void handleSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len) {
   writeStringToEEPROM(WIFI_PASS_ADDR, password);
   writeStringToEEPROM(DEVICE_ID_ADDR, deviceId);
   writeStringToEEPROM(USER_ID_ADDR, userIdFromRequest);
+  writeStringToEEPROM(USER_JWT_ADDR, jwtFromRequest);
   EEPROM.write(SETUP_COMPLETE_ADDR, 1);
   EEPROM.commit();
   
   userId = userIdFromRequest;
+  userJWT = jwtFromRequest;
   setupComplete = true;
-  
-  registerDevice();
   
   JsonDocument responseDoc;
   responseDoc["success"] = true;
@@ -219,43 +274,10 @@ void handleSetup(AsyncWebServerRequest *request, uint8_t *data, size_t len) {
   WiFi.mode(WIFI_STA);
 }
 
-void registerDevice() {
-  if (WiFi.status() != WL_CONNECTED) return;
-  
-  WiFiClient client;
-  HTTPClient http;
-  http.begin(client, String(SUPABASE_URL) + DEVICES_ENDPOINT);
-  http.addHeader("Content-Type", "application/json");
-  http.addHeader("apikey", SUPABASE_KEY);
-  http.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
-  
-  JsonDocument doc;
-  doc["device_id"] = deviceId;
-  doc["user_id"] = userId;
-  doc["device_name"] = "Pet Feeder";
-  JsonObject lastStatus = doc["last_status"].to<JsonObject>();
-  lastStatus["food_level"] = 100;
-  
-  String requestBody;
-  serializeJson(doc, requestBody);
-  
-  int httpResponseCode = http.POST(requestBody);
-  
-  if (httpResponseCode > 0) {
-    Serial.println("Device registered successfully");
-    Serial.println(http.getString());
-  } else {
-    Serial.print("Error registering device: ");
-    Serial.println(httpResponseCode);
-  }
-  
-  http.end();
-}
-
 void updateDeviceStatus() {
   if (WiFi.status() != WL_CONNECTED) return;
   
-  int foodLevel = map(analogRead(FOOD_LEVEL_PIN), 0, 1023, 0, 100); // ESP8266 ADC range
+  int foodLevel = map(analogRead(FOOD_LEVEL_PIN), 0, 1023, 0, 100); // ESP8266 ADC range 0-1023
   
   WiFiClient client;
   HTTPClient http;
@@ -263,7 +285,7 @@ void updateDeviceStatus() {
   http.begin(client, endpoint);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", SUPABASE_KEY);
-  http.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+  http.addHeader("Authorization", "Bearer " + userJWT);  // Use user's JWT
   http.addHeader("Prefer", "return=minimal");
   
   JsonDocument doc;
@@ -280,6 +302,9 @@ void updateDeviceStatus() {
   if (httpResponseCode <= 0) {
     Serial.print("Error updating device status: ");
     Serial.println(httpResponseCode);
+  } else if (httpResponseCode == 401) {
+    // JWT might be expired - in a production system we'd need to handle refresh
+    Serial.println("Authentication error - JWT may be expired");
   }
   
   http.end();
@@ -293,7 +318,7 @@ void checkForCommands() {
   String endpoint = String(SUPABASE_URL) + DEVICES_ENDPOINT + "?select=last_status&device_id=eq." + deviceId;
   http.begin(client, endpoint);
   http.addHeader("apikey", SUPABASE_KEY);
-  http.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+  http.addHeader("Authorization", "Bearer " + userJWT);  // Use user's JWT
   
   int httpResponseCode = http.GET();
   
@@ -311,7 +336,7 @@ void checkForCommands() {
       JsonObject lastStatus = doc[0]["last_status"];
       
       if (lastStatus["command"] == "dispense") {
-        int amount = lastStatus["amount"] | 10;
+        int amount = lastStatus["command_amount"] | 10;
         dispenseFood(amount);
         
         WiFiClient clearClient;
@@ -319,7 +344,7 @@ void checkForCommands() {
         clearHttp.begin(clearClient, endpoint.substring(0, endpoint.indexOf("?")));
         clearHttp.addHeader("Content-Type", "application/json");
         clearHttp.addHeader("apikey", SUPABASE_KEY);
-        clearHttp.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+        clearHttp.addHeader("Authorization", "Bearer " + userJWT);
         clearHttp.addHeader("Prefer", "return=minimal");
         
         JsonDocument clearDoc;
@@ -327,6 +352,7 @@ void checkForCommands() {
         clearStatus["food_level"] = map(analogRead(FOOD_LEVEL_PIN), 0, 1023, 0, 100);
         clearStatus["wifi_strength"] = WiFi.RSSI();
         clearStatus["last_update"] = String(millis() / 1000);
+        clearStatus["command"] = ""; // Clear command
         
         String clearBody;
         serializeJson(clearDoc, clearBody);
@@ -372,7 +398,7 @@ void recordFeeding(int amount) {
   http.begin(client, String(SUPABASE_URL) + HISTORY_ENDPOINT);
   http.addHeader("Content-Type", "application/json");
   http.addHeader("apikey", SUPABASE_KEY);
-  http.addHeader("Authorization", "Bearer " + String(SUPABASE_KEY));
+  http.addHeader("Authorization", "Bearer " + userJWT);  // Use user's JWT
   
   JsonDocument doc;
   doc["device_id"] = deviceId;

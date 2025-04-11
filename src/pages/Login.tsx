@@ -10,16 +10,32 @@ const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginAttempts, setLoginAttempts] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is already logged in
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        navigate('/dashboard');
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Session check error:", error);
+          return;
+        }
+        
+        if (data.session) {
+          // Get the redirect path from sessionStorage or default to dashboard
+          const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+          // Clear the stored path
+          sessionStorage.removeItem('redirectAfterLogin');
+          // Navigate to the redirect path
+          navigate(redirectPath);
+        }
+      } catch (error) {
+        console.error("Failed to check session:", error);
       }
     };
+    
     checkSession();
   }, [navigate]);
 
@@ -41,12 +57,20 @@ const Login: React.FC = () => {
       setLoading(true);
       setError(null);
       
+      // Track login attempts to detect potential issues
+      setLoginAttempts(prev => prev + 1);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('Invalid login')) {
+          throw new Error('Invalid email or password');
+        }
+        throw error;
+      }
       
       if (data.session) {
         // Set session persistence based on rememberMe
@@ -57,10 +81,25 @@ const Login: React.FC = () => {
             refresh_token: data.session.refresh_token,
           });
         }
-        navigate('/dashboard');
+        
+        // Get the redirect path from sessionStorage or default to dashboard
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+        // Clear the stored path
+        sessionStorage.removeItem('redirectAfterLogin');
+        // Navigate to the redirect path
+        console.log("Login successful, redirecting to:", redirectPath);
+        navigate(redirectPath);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred during login');
+      
+      // If multiple login attempts fail, provide more detailed error
+      if (loginAttempts > 2) {
+        console.error("Multiple login failures:", err);
+        setError(
+          `${err.message || 'Login failed'} - If this persists, please check your internet connection and try clearing your browser cache.`
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -70,6 +109,10 @@ const Login: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Save current attempted path before OAuth redirect
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+      sessionStorage.setItem('socialAuthRedirect', redirectPath);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider,

@@ -62,12 +62,18 @@ const DeviceSetup: React.FC = () => {
       setIsConnecting(true);
       setError(null);
       
-      // Get the current user ID from Supabase
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      // Get the current user session for JWT and ID
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) throw sessionError;
+      if (!sessionData.session) throw new Error('User not authenticated');
+      
+      const user = sessionData.session.user;
+      const accessToken = sessionData.session.access_token;
+      
+      if (!user || !accessToken) throw new Error('User authentication invalid');
       
       // Simulate sending the request to the device in setup mode
-      // In a real app, you would make a fetch request to the device's local IP
       console.log(`Sending setup request to http://192.168.4.1/setup`);
       
       try {
@@ -77,10 +83,12 @@ const DeviceSetup: React.FC = () => {
             'Content-Type': 'application/json',
             'X-Setup-Token': 'your-secret-token-1234'
           },
+          mode: 'cors',
           body: JSON.stringify({
             ssid,
             password,
-            user_id: user.id
+            user_id: user.id,
+            access_token: accessToken
           })
         });
         
@@ -90,11 +98,28 @@ const DeviceSetup: React.FC = () => {
         
         const data = await response.json();
         
-        // Store the device ID returned from the setup
-        setDeviceId(data.device_id);
-        setIsSuccess(true);
+        if (!data.device_id) {
+          throw new Error('Device ID not returned from setup');
+        }
         
-        // Move to success step
+        // Register the device in Supabase with the ID received from the device
+        const { data: device, error: deviceError } = await supabase
+          .from('devices')
+          .insert([
+            {
+              device_id: data.device_id,
+              user_id: user.id,
+              device_name: 'Pet Feeder',
+              last_status: { food_level: 100, wifi_strength: 0 }
+            }
+          ])
+          .select();
+        
+        if (deviceError) throw deviceError;
+        
+        // Display the device ID with the pf- prefix for user friendliness
+        setDeviceId(`pf-${data.device_id.substring(0, 8)}`);
+        setIsSuccess(true);
         setCurrentStep(3);
       } catch (fetchError) {
         console.error("Error communicating with device:", fetchError);
@@ -103,8 +128,8 @@ const DeviceSetup: React.FC = () => {
         // since the device doesn't actually exist in this environment
         console.log("Simulating successful device setup for demo purposes");
         
-        // Generate a mock device ID
-        const mockDeviceId = `pf-${Math.random().toString(16).slice(2, 10)}`;
+        // Generate a proper UUID for device_id that matches Supabase's expectations
+        const mockDeviceId = crypto.randomUUID();
         
         // Register the device in Supabase
         const { data: device, error: deviceError } = await supabase
@@ -121,7 +146,8 @@ const DeviceSetup: React.FC = () => {
         
         if (deviceError) throw deviceError;
         
-        setDeviceId(mockDeviceId);
+        // Store the device ID (we'll display it with the pf- prefix for UI consistency)
+        setDeviceId(`pf-${mockDeviceId.slice(0, 8)}`);
         setIsSuccess(true);
         setCurrentStep(3);
       }

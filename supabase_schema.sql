@@ -76,6 +76,20 @@ CREATE POLICY "Users can update their own profile"
   ON public.profiles 
   FOR UPDATE USING (auth.uid() = id);
 
+-- Special policy for admin emails - this avoids the recursion
+CREATE POLICY "Admin email access"
+  ON public.profiles
+  FOR SELECT 
+  USING (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com');
+
+-- Enable admin users after initial setup
+CREATE POLICY "Admins can view all profiles" 
+  ON public.profiles 
+  FOR SELECT USING (
+    (auth.jwt() ->> 'email' = 'petfeeder@redwancodes.com') OR
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'admin'
+  );
+
 -- Devices: Users can CRUD only their own devices
 CREATE POLICY "Users can view their own devices" 
   ON public.devices 
@@ -145,15 +159,6 @@ CREATE POLICY "Users can create feeding history for their own devices"
   );
 
 -- Admins can access all data
-CREATE POLICY "Admins can view all profiles" 
-  ON public.profiles 
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM public.profiles 
-      WHERE id = auth.uid() AND role = 'admin'
-    )
-  );
-
 CREATE POLICY "Admins can view all devices" 
   ON public.devices 
   FOR SELECT USING (

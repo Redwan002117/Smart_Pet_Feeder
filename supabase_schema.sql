@@ -59,12 +59,25 @@ CREATE TABLE public.feeding_history (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create user preferences table
+CREATE TABLE public.user_preferences (
+  id UUID REFERENCES auth.users(id) PRIMARY KEY,
+  theme TEXT DEFAULT 'orange' CHECK (theme IN ('blue', 'purple', 'orange')),
+  dark_mode BOOLEAN DEFAULT FALSE,
+  notification_email BOOLEAN DEFAULT TRUE,
+  notification_push BOOLEAN DEFAULT TRUE,
+  language TEXT DEFAULT 'en',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.schedules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.feeding_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 
 -- Create RLS policies
 -- Profiles: Users can read/update only their own profile
@@ -158,6 +171,15 @@ CREATE POLICY "Users can create feeding history for their own devices"
     )
   );
 
+-- User Preferences: Users can read/update only their own preferences
+CREATE POLICY "Users can view their own preferences" 
+  ON public.user_preferences 
+  FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own preferences" 
+  ON public.user_preferences 
+  FOR UPDATE USING (auth.uid() = id);
+
 -- Admins can access all data
 CREATE POLICY "Admins can view all devices" 
   ON public.devices 
@@ -208,14 +230,20 @@ CREATE INDEX idx_feeding_history_time ON public.feeding_history(time);
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Create profile
   INSERT INTO public.profiles (id, username, full_name, avatar_url, email)
   VALUES (
     NEW.id, 
     COALESCE(NEW.raw_user_meta_data->>'username', 'user' || substr(gen_random_uuid()::text, 1, 8)),
     COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
-    COALESCE(NEW.raw_user_meta_data->>'avatar_url'),
+    COALESCE(NEW.raw_user_meta_data->>'avatar_url', NEW.raw_user_meta_data->>'picture'),
     NEW.email
   );
+  
+  -- Create user preferences
+  INSERT INTO public.user_preferences (id)
+  VALUES (NEW.id);
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -229,6 +257,7 @@ CREATE TRIGGER on_auth_user_created
 ALTER PUBLICATION supabase_realtime ADD TABLE public.devices;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.schedules;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.feeding_history;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.user_preferences;
 
 -- Create admin user (to be run manually with actual values)
 -- Replace 'admin-user-uuid' with the actual UUID from auth.users

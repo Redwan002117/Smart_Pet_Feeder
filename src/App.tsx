@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [userPreferences, setUserPreferences] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   useEffect(() => {
@@ -35,28 +36,17 @@ const App: React.FC = () => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
-        setLoading(false);
         
-        // If session exists, fetch user profile
+        // If session exists, fetch user profile and preferences
         if (session) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-            
-          setUserProfile(profile);
-          
-          // Check if user is admin
-          const isAdminUser = 
-            session.user.email === 'petfeeder@redwancodes.com' || 
-            (profile && profile.role === 'admin');
-            
-          setIsAdmin(isAdminUser);
+          await fetchUserData(session);
         } else {
           setUserProfile(null);
+          setUserPreferences(null);
           setIsAdmin(false);
         }
+        
+        setLoading(false);
       }
     );
 
@@ -66,20 +56,7 @@ const App: React.FC = () => {
       setSession(data.session);
       
       if (data.session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single();
-          
-        setUserProfile(profile);
-        
-        // Check if user is admin
-        const isAdminUser = 
-          data.session.user.email === 'petfeeder@redwancodes.com' || 
-          (profile && profile.role === 'admin');
-          
-        setIsAdmin(isAdminUser);
+        await fetchUserData(data.session);
       }
       
       setLoading(false);
@@ -87,11 +64,81 @@ const App: React.FC = () => {
     
     checkSession();
 
+    // Apply theme and dark mode from localStorage for initial render
+    const storedTheme = localStorage.getItem('theme') || 'orange';
+    const storedDarkMode = localStorage.getItem('darkMode') === 'true';
+    
+    document.body.classList.add(`theme-${storedTheme}`);
+    if (storedDarkMode) {
+      document.body.classList.add('dark-mode');
+    }
+
     // Cleanup
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
+
+  const fetchUserData = async (session: any) => {
+    try {
+      // Fetch user profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+        
+      if (profileError) throw profileError;
+      setUserProfile(profile);
+      
+      // Fetch user preferences
+      const { data: preferences, error: prefError } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (preferences) {
+        setUserPreferences(preferences);
+        
+        // Apply theme and dark mode from preferences
+        document.body.classList.remove('theme-orange', 'theme-blue', 'theme-purple');
+        document.body.classList.add(`theme-${preferences.theme}`);
+        
+        if (preferences.dark_mode) {
+          document.body.classList.add('dark-mode');
+        } else {
+          document.body.classList.remove('dark-mode');
+        }
+        
+        // Save to localStorage as well
+        localStorage.setItem('theme', preferences.theme);
+        localStorage.setItem('darkMode', preferences.dark_mode.toString());
+      } else if (prefError && prefError.code !== 'PGRST116') {
+        // If error is not "no rows returned" error
+        console.error("Error fetching user preferences:", prefError);
+      }
+      
+      // Check if user is admin
+      const isAdminUser = 
+        session.user.email === 'petfeeder@redwancodes.com' || 
+        (profile && profile.role === 'admin');
+        
+      setIsAdmin(isAdminUser);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+  
+  const handleThemeChange = (theme: string) => {
+    // Theme changes will be handled by the Header component directly
+    // since it updates both localStorage and user preferences in the database
+  };
+  
+  const handleDarkModeToggle = () => {
+    // Dark mode toggle will be handled by the Header component directly
+    // since it updates both localStorage and user preferences in the database
+  };
 
   if (loading) {
     return (
@@ -104,8 +151,15 @@ const App: React.FC = () => {
 
   return (
     <Router>
-      <Header session={session} profile={userProfile} isAdmin={isAdmin} />
-      <main className={session ? 'authenticated' : ''}>
+      <Header 
+        session={session} 
+        profile={userProfile} 
+        isAdmin={isAdmin} 
+        userPreferences={userPreferences}
+        onThemeChange={handleThemeChange}
+        onDarkModeToggle={handleDarkModeToggle}
+      />
+      <main className={`main-content ${session ? 'authenticated' : ''}`}>
         <React.Suspense fallback={
           <div className="loading-container">
             <div className="loading-spinner"></div>
@@ -158,7 +212,7 @@ const App: React.FC = () => {
             } />
             <Route path="/settings" element={
               <ProtectedRoute session={session}>
-                <Settings />
+                <Settings userPreferences={userPreferences} />
               </ProtectedRoute>
             } />
             

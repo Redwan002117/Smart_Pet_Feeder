@@ -27,6 +27,17 @@
   --transition-slow: all 0.5s ease-in-out;
 }
 
+/* Dark mode theme */
+.dark-mode {
+  --background-color: #121212;
+  --text-color: #e0e0e0;
+  --dark-gray: #aaa;
+  --light-gray: #444;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -39,6 +50,7 @@ body {
   background-color: var(--background-color);
   color: var(--text-color);
   line-height: 1.6;
+  transition: background-color var(--transition-medium), color var(--transition-medium);
 }
 
 button, input, select, textarea {
@@ -71,6 +83,31 @@ button, input, select, textarea {
   transform: translateY(0);
 }
 
+/* Primary button */
+.btn-primary {
+  background-color: var(--theme-primary);
+  color: var(--text-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--theme-secondary);
+}
+
+.dark-mode .btn-primary {
+  color: #212121;
+}
+
+/* Secondary button */
+.btn-secondary {
+  background-color: transparent;
+  border: 2px solid var(--theme-primary);
+  color: var(--theme-primary);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(255, 215, 0, 0.1);
+}
+
 /* Card component */
 .card {
   background-color: white;
@@ -85,6 +122,10 @@ button, input, select, textarea {
   box-shadow: var(--shadow-lg);
 }
 
+.dark-mode .card {
+  background-color: #1e1e1e;
+}
+
 /* Form elements */
 input, textarea, select {
   width: 100%;
@@ -93,12 +134,23 @@ input, textarea, select {
   border-radius: var(--border-radius-sm);
   margin-bottom: 15px;
   transition: var(--transition-fast);
+  background-color: transparent;
+  color: var(--text-color);
 }
 
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+}
+
+.dark-mode input, .dark-mode textarea, .dark-mode select {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+.dark-mode input:focus, .dark-mode textarea:focus, .dark-mode select:focus {
+  box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.4);
 }
 
 /* Container classes */
